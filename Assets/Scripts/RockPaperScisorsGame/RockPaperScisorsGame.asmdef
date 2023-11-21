@@ -1,0 +1,16 @@
+{
+    "name": "RockPaperScisorsGame",
+    "rootNamespace": "",
+    "references": [
+        "GUID:7907fe5843cbc8943af7610cee6696aa"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
