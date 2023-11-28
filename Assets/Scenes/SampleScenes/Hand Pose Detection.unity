@@ -214,7 +214,7 @@ PrefabInstance:
     - target: {fileID: 5571620627189813233, guid: 5a2b7cdd5b910414d94d31dd271b3a1e, type: 3}
       propertyPath: poseToDetect
       value: 
-      objectReference: {fileID: 11400000, guid: 43a9744b7cb7d8c47a5c48e79dd269f5, type: 2}
+      objectReference: {fileID: 11400000, guid: e88100b7a68366c4f8bad3422e9129db, type: 2}
     - target: {fileID: 5571620627189813233, guid: 5a2b7cdd5b910414d94d31dd271b3a1e, type: 3}
       propertyPath: poseRules.Array.size
       value: 0

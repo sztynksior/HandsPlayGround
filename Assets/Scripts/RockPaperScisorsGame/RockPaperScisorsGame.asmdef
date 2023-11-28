@@ -2,7 +2,9 @@
     "name": "RockPaperScisorsGame",
     "rootNamespace": "",
     "references": [
-        "GUID:7907fe5843cbc8943af7610cee6696aa"
+        "GUID:7907fe5843cbc8943af7610cee6696aa",
+        "GUID:4ebf2f17db890714dbdaef6117716062",
+        "GUID:6055be8ebefd69e48b49212b09b47b2f"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
