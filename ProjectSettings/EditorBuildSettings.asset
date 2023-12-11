@@ -4,5 +4,17 @@
 EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
-  m_Scenes: []
+  m_Scenes:
+  - enabled: 1
+    path: Assets/Scenes/ChooseLevel.unity
+    guid: c08c5fb3769542946b6df0b3f1aa5ebb
+  - enabled: 1
+    path: Assets/Scenes/3DInteractions.unity
+    guid: 0a7788399290fed43a49e04702a447a4
+  - enabled: 1
+    path: Assets/Scenes/ControlPanel.unity
+    guid: d2b4fc31ddb95d943bd107b85e1561eb
+  - enabled: 1
+    path: Assets/Scenes/RockPaperScisorsGame.unity
+    guid: a75cde8ba734176449c15ba361d29b0f
   m_configObjects: {}
