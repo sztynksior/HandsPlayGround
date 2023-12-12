@@ -1,7 +1,9 @@
 {
     "name": "3DInteractions",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "GUID:3a12b97a7afaf6b47bfe53cf1f942886"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
