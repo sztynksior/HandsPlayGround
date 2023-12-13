@@ -24,7 +24,9 @@ public class StartGameState : IGameState
             stateManager.TransitionTo(stateManager.GetReadyState);
             return;
         }
-        this._display.SetText("Poka¿ kciuk w górê aby rozpocz¹æ grê.");
+        this._display.SetMainDisplayText("Poka¿ kciuk w górê aby rozpocz¹æ grê.");
+        this._display.TurnOffFigureDisplay();
+        this._display.SetOutcomeDisplayText("");
     }
 
     public void Exit(GameStateManager stateManager)

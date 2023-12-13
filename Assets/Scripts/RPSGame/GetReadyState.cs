@@ -21,7 +21,7 @@ public class GetReadyState : IGameState
     public void Update(GameStateManager stateManager)
     {
         this._timer.Update();
-        this._display.SetText(this._timer.GetCurrentCount().ToString());
+        this._display.SetMainDisplayText(this._timer.GetCurrentCount().ToString());
 
         if (this._timer.IsRunning() == false)
         {

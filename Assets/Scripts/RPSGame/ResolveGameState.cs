@@ -31,48 +31,58 @@ public class ResolveGameState : IGameState
             {
                 if (computerHandPose == HandPose.Fist)
                 {
-                    this._dipsplay.SetText("Kamieñ\n\nRemis");
+                    this._dipsplay.DisplayRock();
+                    this._dipsplay.SetOutcomeDisplayText("REMIS");
                 }
                 else if (computerHandPose == HandPose.OpenPalm)
                 {
-                    this._dipsplay.SetText("Papier\n\nPrzegra³eœ");
+                    this._dipsplay.DisplayPaper();
+                    this._dipsplay.SetOutcomeDisplayText("PRZEGRA£EŒ");
                 }
                 else if (computerHandPose == HandPose.Scissors)
                 {
-                    this._dipsplay.SetText("No¿yce\n\nWygra³eœ");
+                    this._dipsplay.DisplayScissors();
+                    this._dipsplay.SetOutcomeDisplayText("WYGRA£EŒ");
                 }
             }
             else if (playerHandPose == HandPose.OpenPalm)
             {
                 if (computerHandPose == HandPose.Fist)
                 {
-                    this._dipsplay.SetText("Kamieñ\n\nWygra³eœ");
+                    this._dipsplay.DisplayRock();
+                    this._dipsplay.SetOutcomeDisplayText("WYGRA£EŒ");
                 }
                 else if (computerHandPose == HandPose.OpenPalm)
                 {
-                    this._dipsplay.SetText("Papier\n\nRemis");
+                    this._dipsplay.DisplayPaper();
+                    this._dipsplay.SetOutcomeDisplayText("REMIS");
                 }
                 else if (computerHandPose == HandPose.Scissors)
                 {
-                    this._dipsplay.SetText("No¿yce\n\nPrzegra³eœ");
+                    this._dipsplay.DisplayScissors();
+                    this._dipsplay.SetOutcomeDisplayText("PRZEGRA£EŒ");
                 }
             }
             else if (playerHandPose == HandPose.Scissors)
             {
                 if (computerHandPose == HandPose.Fist)
                 {
-                    this._dipsplay.SetText("Kamieñ\n\nPrzegra³eœ");
+                    this._dipsplay.DisplayRock();
+                    this._dipsplay.SetOutcomeDisplayText("PRZEGRA£EŒ");
                 }
                 else if (computerHandPose == HandPose.OpenPalm)
                 {
-                    this._dipsplay.SetText("Papier\n\nWygra³eœ");
+                    this._dipsplay.DisplayPaper();
+                    this._dipsplay.SetOutcomeDisplayText("WYGRA£EŒ");
                 }
                 else if (computerHandPose == HandPose.Scissors)
                 {
-                    this._dipsplay.SetText("No¿yce\n\nRemis");
+                    this._dipsplay.DisplayScissors();
+                    this._dipsplay.SetOutcomeDisplayText("REMIS");
                 }
             }
-
+            this._dipsplay.SetMainDisplayText("");
+            this._dipsplay.TurnOnFigureDisplay();
             stateManager.TransitionTo(stateManager.BreakeState);
             return;
         }
@@ -81,7 +91,7 @@ public class ResolveGameState : IGameState
             playerHandPose = this._handPoseManager.GetPose();
         }
 
-        this._dipsplay.SetText("Kamieñ Papier No¿yce");
+        this._dipsplay.SetMainDisplayText("Kamieñ Papier No¿yce");
     }
 
     public void Exit(GameStateManager stateManager)
