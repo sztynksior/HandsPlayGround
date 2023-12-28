@@ -1,4 +1,5 @@
 using Leap.Unity;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -11,17 +12,42 @@ public class NonKinematicRubicCube : MonoBehaviour
     private List<NonKinematicPiece> pieces = new List<NonKinematicPiece>();
     private float minimalProjectionMagnitudeToDetermineRotationAxis = 0.12f;
     private float rotationSpeedMultipler = 20f;
-    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.000001f;
+    private float aligningSpeed = 5f;
+    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.0001f;
+    private int numberOfWalls = 4;
+    private List<float> alignmentAngles = new List<float>();
 
     private void Awake()
     {
         this.pieces = new List<NonKinematicPiece>(GetComponentsInChildren<NonKinematicPiece>());
+        this.alignmentAngles = this.DetermineAlignmentAngles();
+    }
+
+    private void FixedUpdate()
+    {
+        if (this.aligningOn)
+        {
+            this.AlignSegment();
+        }
+    }
+
+    private List<float> DetermineAlignmentAngles()
+    {
+        List<float> aligningAngles = new List<float>();
+        float aligmentAnglesInterval = 360f / this.numberOfWalls;
+
+        for (int i = 0; i < numberOfWalls; i++)
+        {
+            aligningAngles.Add(aligmentAnglesInterval * i);
+        }
+
+        return aligningAngles;
     }
 
     private Vector3 rotationAxis = Vector3.zero;
-    private List<NonKinematicPiece> piecesToRotate = new List<NonKinematicPiece>();
+    private List<NonKinematicPiece> rotatingSegment = new List<NonKinematicPiece>();
 
-    public void RotateWall(Vector3 pulledPiecePosition, Vector3 graspPosition)
+    public void RotateSegment(Vector3 pulledPiecePosition, Vector3 graspPosition)
     {
         Vector3 pullVector = graspPosition - pulledPiecePosition;
 
@@ -33,9 +59,9 @@ public class NonKinematicRubicCube : MonoBehaviour
         {
             Vector3 rotationPlaneNormal = this.GetRotationPlaneNormal();
 
-            if (this.piecesToRotate.Count == 0) 
+            if (this.rotatingSegment.Count == 0)
             {
-                this.piecesToRotate = this.FindPiecesToRotate(pulledPiecePosition, rotationPlaneNormal);
+                this.rotatingSegment = this.FindPiecesToRotate(pulledPiecePosition, rotationPlaneNormal);
             }
 
             Vector3 vectorFromPieceToCenter = this.transform.position - pulledPiecePosition;
@@ -43,7 +69,7 @@ public class NonKinematicRubicCube : MonoBehaviour
             Vector3 radiusVector = Vector3.ProjectOnPlane(vectorFromPieceToCenter, rotationPlaneNormal);
             float rotationSpeed = this.CalculateRotationSpeed(rotationVector, radiusVector, rotationPlaneNormal);
 
-            foreach(NonKinematicPiece piece in this.piecesToRotate) 
+            foreach(NonKinematicPiece piece in this.rotatingSegment) 
             {
                 piece.transform.RotateAround(this.transform.position, rotationPlaneNormal, rotationSpeed);
             }
@@ -137,7 +163,72 @@ public class NonKinematicRubicCube : MonoBehaviour
 
     public void ResetWallRotation()
     {
-        this.rotationAxis = Vector3.zero;
-        this.piecesToRotate.Clear();
+        this.aligningOn = true;
+    }
+
+    private bool aligningOn = false;
+    private bool piecesAligned = false;
+    private void AlignSegment()
+    {
+        if(!piecesAligned)
+        {
+            Vector3 rotationPlaneNormal = this.GetRotationPlaneNormal();
+            Vector3 rotationZeroVector = Vector3.ProjectOnPlane(this.transform.right + this.transform.up + this.transform.forward, rotationPlaneNormal);
+
+            foreach (NonKinematicPiece piece in this.rotatingSegment)
+            {
+                Vector3 rotationVectorOfPiece = Vector3.ProjectOnPlane(piece.transform.right + piece.transform.up + piece.transform.forward, rotationPlaneNormal);
+                float differenceToAlignmentAngle = this.CalculateDifferenceToAlignmentAngle(rotationVectorOfPiece, rotationZeroVector, rotationPlaneNormal);
+                if (Mathf.Abs(differenceToAlignmentAngle) > this.aligningSpeed)
+                {
+                    piece.transform.RotateAround(this.transform.position, rotationPlaneNormal, Mathf.Sign(differenceToAlignmentAngle) * this.aligningSpeed);
+                }
+                else
+                {
+                    piece.transform.RotateAround(this.transform.position, rotationPlaneNormal, differenceToAlignmentAngle);
+                    this.piecesAligned = true;                
+                }
+            }
+        }
+        else
+        {
+            this.aligningOn = false;
+            this.rotatingSegment.Clear();
+            this.rotationAxis = Vector3.zero;
+            this.piecesAligned = false;
+        }
+
+    }
+
+    private float CalculateDifferenceToAlignmentAngle(Vector3 rotationVector, Vector3 rotationZeroVector, Vector3 rotationPlaneNormal)
+    {
+        float rotationAngle = Vector3.SignedAngle(rotationZeroVector, rotationVector, rotationPlaneNormal);
+        float normalizedRotationAngle = 360f + rotationAngle - 360f * MathF.Floor((360f + rotationAngle) / 360f);
+        float smallestDistance = 180f;
+        float smallestDifference = 0f;
+
+        foreach (float angle in this.alignmentAngles)
+        {
+            float difference = angle - normalizedRotationAngle;
+
+            if(difference < -180f)
+            {
+                difference += 360f;
+            }
+            else if (difference > 180f)
+            {
+                difference -= 360f;
+            }
+
+            float distanse = Mathf.Abs(difference);
+
+            if (distanse < smallestDistance)
+            {
+                smallestDistance = distanse;
+                smallestDifference = difference;
+            }
+        }
+
+        return smallestDifference;
     }
 }

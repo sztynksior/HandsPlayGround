@@ -28,7 +28,7 @@ public class NonKinematicPiece : MonoBehaviour
 
     private void CalculateRotation()
     {
-        this.rubicCube.RotateWall(this.transform.position, this.interactionBehaviour.GetGraspPoint(this.interactionBehaviour.graspingController));
+        this.rubicCube.RotateSegment(this.transform.position, this.interactionBehaviour.GetGraspPoint(this.interactionBehaviour.graspingController));
     }
 
     private void NotifyAboutGraspStop()
