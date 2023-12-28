@@ -1,5 +1,7 @@
+using Leap.Unity;
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -7,8 +9,9 @@ using UnityEngine.UIElements;
 public class NonKinematicRubicCube : MonoBehaviour
 {
     private List<NonKinematicPiece> pieces = new List<NonKinematicPiece>();
-    private float minimumRotationMagnitudeToDetermineRotationAxis = 0.12f;
+    private float minimalProjectionMagnitudeToDetermineRotationAxis = 0.12f;
     private float rotationSpeedMultipler = 20f;
+    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.000001f;
 
     private void Awake()
     {
@@ -18,12 +21,9 @@ public class NonKinematicRubicCube : MonoBehaviour
     private Vector3 rotationAxis = Vector3.zero;
     private List<NonKinematicPiece> piecesToRotate = new List<NonKinematicPiece>();
 
-    public void RotateWall(Vector3 pulledPieceLocalPosition, Vector3 pulledPiecePosition, Vector3 pullVector)
+    public void RotateWall(Vector3 pulledPiecePosition, Vector3 graspPosition)
     {
-        Vector3 relativePullVector = this.CalculateRelativePullVector(pullVector);
-        Vector3 vectorFromPieceToCenter = this.CalculateVectorFromPieceToCenter(pulledPiecePosition);
-        Debug.Log("RelativePullVector: " +  relativePullVector);
-        Debug.Log("vectorFromPieceToCenter: " + vectorFromPieceToCenter);
+        Vector3 pullVector = graspPosition - pulledPiecePosition;
 
         if (rotationAxis == Vector3.zero)
         {
@@ -31,76 +31,47 @@ public class NonKinematicRubicCube : MonoBehaviour
         }
         else
         {
+            Vector3 rotationPlaneNormal = this.GetRotationPlaneNormal();
+
             if (this.piecesToRotate.Count == 0) 
             {
-                this.piecesToRotate = this.FindPiecesToRotate(pulledPieceLocalPosition, rotationAxis);
+                this.piecesToRotate = this.FindPiecesToRotate(pulledPiecePosition, rotationPlaneNormal);
             }
 
-            Vector3 rotationVector =  this.CalculateRotationVector(relativePullVector, this.rotationAxis);
-            Vector3 radiusVector = this.CalculateRadiusVector(vectorFromPieceToCenter, this.rotationAxis);
-            Vector3 crossProduc = Vector3.Cross(rotationVector, radiusVector.normalized);
-            Debug.Log("rotationAxis: " + rotationAxis);
-            Debug.Log("rotationVector: " + rotationVector);
-            Debug.Log("radiusVector: " + radiusVector);
-            Debug.Log("crossProduc: " + crossProduc);
+            Vector3 vectorFromPieceToCenter = this.transform.position - pulledPiecePosition;
+            Vector3 rotationVector = Vector3.ProjectOnPlane(pullVector, rotationPlaneNormal);
+            Vector3 radiusVector = Vector3.ProjectOnPlane(vectorFromPieceToCenter, rotationPlaneNormal);
+            float rotationSpeed = this.CalculateRotationSpeed(rotationVector, radiusVector, rotationPlaneNormal);
 
             foreach(NonKinematicPiece piece in this.piecesToRotate) 
             {
-                if (rotationAxis == new Vector3(1f, 0f, 0f))
-                {
-                    piece.transform.RotateAround(this.transform.position, this.transform.right, rotationSpeedMultipler * crossProduc.x);
-                }
-                else if (rotationAxis == new Vector3(0f, 1f, 0f))
-                {
-                    piece.transform.RotateAround(this.transform.position, this.transform.up, rotationSpeedMultipler * crossProduc.y);
-                }
-                else if (rotationAxis == new Vector3(0f, 0f, 1f))
-                {
-                    piece.transform.RotateAround(this.transform.position, this.transform.forward, rotationSpeedMultipler * crossProduc.z);
-                }
+                piece.transform.RotateAround(this.transform.position, rotationPlaneNormal, rotationSpeed);
             }
         }
     }
 
-    private Vector3 CalculateRelativePullVector(Vector3 pullVector)
-    {
-        Vector3 relativePullVector = new Vector3(
-            Vector3.Dot(pullVector, this.transform.right),
-            Vector3.Dot(pullVector, this.transform.up),
-            Vector3.Dot(pullVector, this.transform.forward));
-
-        return relativePullVector;
-    }
-
-    private Vector3 CalculateVectorFromPieceToCenter(Vector3 pulledPiecePosition)
-    {
-        Vector3 vectorFromPieceToCenter = this.transform.position - pulledPiecePosition;
-
-        return vectorFromPieceToCenter;
-    }
-
-    private Vector3 DetermineRotationAxis(Vector3 relativePullVector)
+    private Vector3 DetermineRotationAxis(Vector3 pullVector)
     {
         Vector3 rotationAxis = Vector3.zero;
-        Vector3 rotationOnX = CalculateRotationVector(relativePullVector, new Vector3(1f, 0f, 0f));
-        Vector3 rotationOnY = CalculateRotationVector(relativePullVector, new Vector3(0f, 1f, 0f));
-        Vector3 rotationOnZ = CalculateRotationVector(relativePullVector, new Vector3(0f, 0f, 1f));
+        Vector3 projectionOnYZ = Vector3.ProjectOnPlane(pullVector, this.transform.right);
+        Vector3 projectionOnXZ = Vector3.ProjectOnPlane(pullVector, this.transform.up);
+        Vector3 projectionOnXY = Vector3.ProjectOnPlane(pullVector, this.transform.forward);
         float maximumRotationMagnitude = Mathf.Max(
-            rotationOnX.magnitude,
-            rotationOnY.magnitude,
-            rotationOnZ.magnitude);
+            projectionOnYZ.magnitude,
+            projectionOnXZ.magnitude,
+            projectionOnXY.magnitude);
 
-        if (maximumRotationMagnitude > this.minimumRotationMagnitudeToDetermineRotationAxis)
+        if (maximumRotationMagnitude > this.minimalProjectionMagnitudeToDetermineRotationAxis)
         {
-            if (maximumRotationMagnitude == rotationOnX.magnitude)
+            if (maximumRotationMagnitude == projectionOnYZ.magnitude)
             {
                 rotationAxis = new Vector3(1f, 0f, 0f);
             }
-            else if (maximumRotationMagnitude == rotationOnY.magnitude)
+            else if (maximumRotationMagnitude == projectionOnXZ.magnitude)
             {
                 rotationAxis = new Vector3(0f, 1f, 0f);
             }
-            else if (maximumRotationMagnitude == rotationOnZ.magnitude)
+            else if (maximumRotationMagnitude == projectionOnXY.magnitude)
             {
                 rotationAxis = new Vector3(0f, 0f, 1f);
             }
@@ -109,64 +80,40 @@ public class NonKinematicRubicCube : MonoBehaviour
         return rotationAxis;
     }
 
-    private Vector3 CalculateRotationVector(Vector3 relativePullVector, Vector3 rotationAxis)
+    private Vector3 GetRotationPlaneNormal()
     {
-        Vector3 rotationVector = Vector3.zero;
+        Vector3 rotationPlaneNormal = Vector3.zero;
 
-        if (rotationAxis == new Vector3(1f, 0f, 0f))
+        if (this.rotationAxis == new Vector3(1f, 0f, 0f))
         {
-            rotationVector = new Vector3(0f, relativePullVector.y, relativePullVector.z);
+            rotationPlaneNormal = this.transform.right;
         }
-        else if (rotationAxis == new Vector3(0f, 1f, 0f))
+        else if (this.rotationAxis == new Vector3(0f, 1f, 0f))
         {
-            rotationVector = new Vector3(relativePullVector.x, 0f, relativePullVector.z);
+            rotationPlaneNormal = this.transform.up;
         }
-        else if (rotationAxis == new Vector3(0f, 0f, 1f))
+        else if (this.rotationAxis == new Vector3(0f, 0f, 1f))
         {
-            rotationVector = new Vector3(relativePullVector.x, relativePullVector.y, 0f);
+            rotationPlaneNormal = this.transform.forward;
         }
 
-        return rotationVector;
+        return rotationPlaneNormal;
     }
 
-    private Vector3 CalculateRadiusVector(Vector3 vectorFromPieceToCenter, Vector3 rotationAxis)
+    private float CalculateRotationSpeed(Vector3 rotationVector, Vector3 radiusVector, Vector3 rotationPlaneNormal)
     {
-        Vector3 radiusVector = Vector3.zero;
+        float rotationSpeed = rotationVector.magnitude * Mathf.Sin(Vector3.SignedAngle(rotationVector, radiusVector, rotationPlaneNormal) * Mathf.Deg2Rad) * this.rotationSpeedMultipler;
 
-        if (rotationAxis == new Vector3(1f, 0f, 0f))
-        {
-            radiusVector = new Vector3(0f, vectorFromPieceToCenter.y, vectorFromPieceToCenter.z);
-        }
-        else if (rotationAxis == new Vector3(0f, 1f, 0f))
-        {
-            radiusVector = new Vector3(vectorFromPieceToCenter.x, 0f, vectorFromPieceToCenter.z);
-        }
-        else if (rotationAxis == new Vector3(0f, 0f, 1f))
-        {
-            radiusVector = new Vector3(vectorFromPieceToCenter.x, vectorFromPieceToCenter.y, 0f);
-        }
-
-        return radiusVector;
+        return rotationSpeed;
     }
 
-    private List<NonKinematicPiece> FindPiecesToRotate(Vector3 pulledPieceLocalPosition, Vector3 rotationAxis)
+    private List<NonKinematicPiece> FindPiecesToRotate(Vector3 pulledPiecePosition, Vector3 rotationPlaneNormal)
     {
-        List<NonKinematicPiece> piecesToRotate = new List<NonKinematicPiece>(); 
-        Vector3 pulledPieceAxisPositionInCube = new Vector3(
-            pulledPieceLocalPosition.x * rotationAxis.x,
-            pulledPieceLocalPosition.y * rotationAxis.y,
-            pulledPieceLocalPosition.z * rotationAxis.z);
-        Vector3 piecePositionInCube;
+        List<NonKinematicPiece> piecesToRotate = new List<NonKinematicPiece>();
 
         foreach (NonKinematicPiece piece in this.pieces)
         {
-            piecePositionInCube = piece.transform.localPosition;
-            piecePositionInCube = new Vector3(
-                piecePositionInCube.x * rotationAxis.x,
-                piecePositionInCube.y * rotationAxis.y,
-                piecePositionInCube.z * rotationAxis.z);
-
-            if (pulledPieceAxisPositionInCube == piecePositionInCube)
+            if (this.IsPointLyingOnPlane(piece.transform.position, pulledPiecePosition, rotationPlaneNormal))
             {
                 piecesToRotate.Add(piece);
             }
@@ -175,8 +122,22 @@ public class NonKinematicRubicCube : MonoBehaviour
         return piecesToRotate;
     }
 
+    private bool IsPointLyingOnPlane(Vector3 anyPoint, Vector3 pointOfPlane, Vector3 planeNormal) 
+    {
+        bool isLying = false;
+        float pointNormalEquationResult = Vector3.Dot(planeNormal, anyPoint - pointOfPlane);
+
+        if (Mathf.Abs(0f - pointNormalEquationResult) < this.epsilonForDeterminingIfPointIsLyingOnPlane)
+        {
+            isLying = true;
+        }
+
+        return isLying;
+    }
+
     public void ResetWallRotation()
     {
         this.rotationAxis = Vector3.zero;
+        this.piecesToRotate.Clear();
     }
 }
