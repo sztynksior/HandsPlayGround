@@ -2,6 +2,7 @@ using Leap.Unity.Interaction;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UIElements;
 
 public class NonKinematicPiece : MonoBehaviour
 {
@@ -16,19 +17,19 @@ public class NonKinematicPiece : MonoBehaviour
 
     private void Start()
     {
-        this.interactionBehaviour.OnGraspStay += this.CalculateRotation;
+        this.interactionBehaviour.OnGraspStay += this.NotifyAboutGraspStay;
         this.interactionBehaviour.OnGraspEnd += this.NotifyAboutGraspStop;
     }
 
     private void OnDestroy()
     {
-        this.interactionBehaviour.OnGraspStay -= this.CalculateRotation;
+        this.interactionBehaviour.OnGraspStay -= this.NotifyAboutGraspStay;
         this.interactionBehaviour.OnGraspEnd -= this.NotifyAboutGraspStop;
     }
 
-    private void CalculateRotation()
+    private void NotifyAboutGraspStay()
     {
-        this.rubicCube.RotateSegment(this.transform.position, this.interactionBehaviour.GetGraspPoint(this.interactionBehaviour.graspingController));
+        this.rubicCube.OnPieceGrasp(this.transform.localPosition, this.interactionBehaviour.GetGraspPoint(this.interactionBehaviour.graspingController));
     }
 
     private void NotifyAboutGraspStop()
