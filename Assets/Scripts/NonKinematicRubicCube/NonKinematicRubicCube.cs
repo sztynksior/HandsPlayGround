@@ -2,6 +2,7 @@ using Leap.Unity;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -9,14 +10,20 @@ using UnityEngine.UIElements;
 
 public class NonKinematicRubicCube : MonoBehaviour
 {
-    private List<NonKinematicPiece> pieces = new List<NonKinematicPiece>();
-    private float minimalProjectionMagnitudeToDetermineRotationAxis = 2f;
+    private float minimalProjectionMagnitudeToDetermineRotationAxis = 1.4f;
     private float rotationSpeedMultipler = 2f;
     private float aligningSpeed = 5f;
-    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.0001f;
+    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.001f;
+
     private int numberOfWalls = 4;
     private List<float> alignmentAngles = new List<float>();
     private List<Vector3> rotationAxes = new List<Vector3>();
+
+    private List<NonKinematicPiece> pieces = new List<NonKinematicPiece>();
+    private List<NonKinematicPiece> graspedPieces = new List<NonKinematicPiece>();
+    private SegmentRotator segmentRotator;
+    private NonKinematicPiece firstGraspedPiece;
+    private NonKinematicPiece secondGraspedPiece;
 
     #region Awake
 
@@ -25,8 +32,9 @@ public class NonKinematicRubicCube : MonoBehaviour
         this.pieces = new List<NonKinematicPiece>(GetComponentsInChildren<NonKinematicPiece>());
         this.DetermineAlignmentAngles();
         this.DetermineRotationAxis();
-
+        this.segmentRotator = new SegmentRotator(this.alignmentAngles, this.transform, this.rotationSpeedMultipler);
     }
+
     private void DetermineAlignmentAngles()
     {
         float aligmentAnglesInterval = 360f / this.numberOfWalls;
@@ -46,76 +54,125 @@ public class NonKinematicRubicCube : MonoBehaviour
 
     #endregion
 
-    private void FixedUpdate()
+    private void Start()
     {
-        if (this.aligningOn)
+        foreach(NonKinematicPiece piece in this.pieces) 
         {
-            this.AlignRotatedSegment();
+            piece.OnGraspBegin += this.DetermineGraspedPiece;
+            piece.OnGraspEnd += this.RemoveGraspedPiece;
         }
     }
 
-    private int numberOfGrasps = 0;
-
-    public void OnPieceGrasp(Vector3 piecePosition, Vector3 graspPosition)
+    private void FixedUpdate()
     {
-        Vector3 localGraspPosition = transform.InverseTransformPoint(graspPosition);
-
-        if (numberOfGrasps < 1 && !aligningOn) 
+        if(this.firstGraspedPiece != null)
         {
-            Vector3 pullVector = localGraspPosition - piecePosition;
-
-            if (!this.RotationAxisDetermined())
+            if(!this.segmentRotator.SegmentIsRotating()) 
             {
-                this.DetermineRotationAxis(pullVector);
+                if (this.secondGraspedPiece != null)
+                {
+                    this.RotateCube();
+                }
+                else
+                {
+                    this.DetermineRotationSegment();
+                }
             }
             else
             {
-                if (this.rotatingSegment.Count == 0)
-                {
-                    this.FindPiecesOfRotatingSegment(piecePosition, this.currentRotaionAxis);
-                }
+                Vector3 pullVector = this.CalculateLocalPullVector();
+                this.segmentRotator.RotateSegmentDependingOnPull(this.firstGraspedPiece.transform.localPosition, pullVector);
+            }
+        }
+        else if (this.segmentRotator.SegmentIsRotating())
+        {
+            this.segmentRotator.AlignRotatedSegment(this.aligningSpeed);
+        }
+    }
 
-                Vector3 vectorFromPieceToCenter = this.transform.localPosition - piecePosition;
-                Vector3 rotationVector = Vector3.ProjectOnPlane(pullVector, this.currentRotaionAxis);
-                Vector3 radiusVector = Vector3.ProjectOnPlane(vectorFromPieceToCenter, this.currentRotaionAxis);
-                float rotationSpeed = this.CalculateRotationSpeed(rotationVector, radiusVector, this.currentRotaionAxis);
-                this.RotateSegment(rotationSpeed);
+    private void OnDestroy()
+    {
+        foreach (NonKinematicPiece piece in this.pieces)
+        {
+            piece.OnGraspBegin -= this.DetermineGraspedPiece;
+            piece.OnGraspEnd -= this.RemoveGraspedPiece;
+        }
+    }
+
+    private void DetermineGraspedPiece(NonKinematicPiece piece)
+    {
+        if (!this.segmentRotator.SegmentIsRotating())
+        {
+            if (this.firstGraspedPiece == null)
+            {
+                this.firstGraspedPiece = piece;
+            }
+            else if (this.secondGraspedPiece == null)
+            {
+                this.secondGraspedPiece = piece;
             }
         }
     }
 
-    private float CalculateRotationSpeed(Vector3 rotationVector, Vector3 radiusVector, Vector3 rotationPlaneNormal)
+    private void RemoveGraspedPiece(NonKinematicPiece piece)
     {
-        float rotationSpeed = rotationVector.magnitude * Mathf.Sin(Vector3.SignedAngle(rotationVector, radiusVector, rotationPlaneNormal) * Mathf.Deg2Rad) * this.rotationSpeedMultipler;
-
-        return rotationSpeed;
-    }
-
-    #region Current Rotation Axis
-
-    private Vector3 currentRotaionAxis = Vector3.zero;
-
-    private bool RotationAxisDetermined()
-    {
-        bool isDetermined = false;
-
-        if (this.currentRotaionAxis != Vector3.zero)
+        if (this.firstGraspedPiece == piece)
         {
-            isDetermined = true;
+            this.firstGraspedPiece = null;
+        }
+        else if (this.secondGraspedPiece == piece)
+        {
+            this.secondGraspedPiece = null;
         }
 
-        return isDetermined;
+        this.crossVectorFromPreviousFrame = Vector3.zero;
     }
 
-    private void DetermineRotationAxis(Vector3 pullVector)
+    Vector3 crossVectorFromPreviousFrame = Vector3.zero;
+
+    private void RotateCube()
     {
+        Vector3 corssVector = Vector3.Cross(this.firstGraspedPiece.GraspPoint - this.transform.position, this.secondGraspedPiece.GraspPoint - this.transform.position).normalized;
+        Quaternion rotationDifference = Quaternion.FromToRotation(this.crossVectorFromPreviousFrame, corssVector);
+        this.transform.rotation = rotationDifference * transform.rotation;
+        this.crossVectorFromPreviousFrame = corssVector;
+    }
+
+    private Vector3 CalculateLocalPullVector()
+    {
+        Vector3 localGraspPosition = transform.InverseTransformPoint(this.firstGraspedPiece.GraspPoint);
+        Vector3 pullVector = localGraspPosition - this.firstGraspedPiece.transform.localPosition;
+
+        return pullVector;
+    }
+
+
+    private void DetermineRotationSegment()
+    {
+        Vector3 rotationAxis = this.DetermineRotationAxisForSegment();
+        
+        if (rotationAxis != Vector3.zero)
+        {
+            List<Transform> piecesToRotate = this.FindPiecesToRotate(rotationAxis);
+
+            this.segmentRotator.SetRotatingSegment(piecesToRotate, rotationAxis);
+        }
+
+    }
+
+    private Vector3 DetermineRotationAxisForSegment()
+    {
+        Vector3 pullVector = this.CalculateLocalPullVector();
+        Vector3 rotationAxis = Vector3.zero;
         List<Vector3> projections = new List<Vector3>();
+
         foreach (Vector3 axis in this.rotationAxes)
         {
             projections.Add(Vector3.ProjectOnPlane(pullVector, axis));
         }
 
         int largestProjectionIndex = 0;
+
         for (int i = 0; i < projections.Count; i++)
         {
             if (projections[i].magnitude > projections[largestProjectionIndex].magnitude)
@@ -126,27 +183,25 @@ public class NonKinematicRubicCube : MonoBehaviour
 
         if (projections[largestProjectionIndex].magnitude > this.minimalProjectionMagnitudeToDetermineRotationAxis)
         {
-            this.currentRotaionAxis = this.rotationAxes[largestProjectionIndex];
+            rotationAxis = this.rotationAxes[largestProjectionIndex];
         }
+
+        return rotationAxis;
     }
 
-    #endregion
-
-    #region Managing Rotating Segment
-
-    private List<NonKinematicPiece> rotatingSegment = new List<NonKinematicPiece>();
-    private float rotationOfSegment = 0f;
-    private bool aligningOn = false;
-
-    private void FindPiecesOfRotatingSegment(Vector3 pulledPiecePosition, Vector3 rotationPlaneNormal)
+    private List<Transform> FindPiecesToRotate(Vector3 rotationPlaneNormal)
     {
+        List<Transform> piecesToRotate = new List<Transform>();
+
         foreach (NonKinematicPiece piece in this.pieces)
         {
-            if (this.IsPointLyingOnPlane(piece.transform.localPosition, pulledPiecePosition, rotationPlaneNormal))
+            if (this.IsPointLyingOnPlane(piece.transform.localPosition, this.firstGraspedPiece.transform.localPosition, rotationPlaneNormal))
             {
-                this.rotatingSegment.Add(piece);
+                piecesToRotate.Add(piece.transform);
             }
         }
+
+        return piecesToRotate;
     }
 
     private bool IsPointLyingOnPlane(Vector3 anyPoint, Vector3 pointOfPlane, Vector3 planeNormal)
@@ -161,83 +216,4 @@ public class NonKinematicRubicCube : MonoBehaviour
 
         return isLying;
     }
-
-    private void RotateSegment(float rotationSpeed)
-    {
-        foreach (NonKinematicPiece piece in this.rotatingSegment)
-        {
-            piece.transform.RotateAround(this.transform.position, transform.TransformDirection(this.currentRotaionAxis), rotationSpeed);
-        }
-
-        this.rotationOfSegment = (this.rotationOfSegment + rotationSpeed) - 360f * Mathf.Floor((this.rotationOfSegment + rotationSpeed) / 360f);
-        Debug.Log("rotation of segment" + this.rotationOfSegment);
-    }
-
-    private void AlignRotatedSegment()
-    {
-        float differenceToAlignmentAngle = this.CalculateDifferenceToNearestAlignmentAngle();
-        if (differenceToAlignmentAngle != 0)
-        { 
-            if (Mathf.Abs(differenceToAlignmentAngle) > this.aligningSpeed)
-            {
-                this.RotateSegment(Mathf.Sign(differenceToAlignmentAngle) * this.aligningSpeed);
-            }
-            else
-            {
-                this.RotateSegment(differenceToAlignmentAngle);
-            }
-        }
-        else
-        {
-            this.ResetSegment();
-        }
-    }
-
-    private float CalculateDifferenceToNearestAlignmentAngle()
-    {
-        float smallestDistance = 180f;
-        float smallestDifference = 0f;
-
-        foreach (float angle in this.alignmentAngles)
-        {
-            float difference = angle - this.rotationOfSegment;
-
-            if (difference < -180f)
-            {
-                difference += 360f;
-            }
-            else if (difference > 180f)
-            {
-                difference -= 360f;
-            }
-
-            float distanse = Mathf.Abs(difference);
-
-            if (distanse < smallestDistance)
-            {
-                smallestDistance = distanse;
-                smallestDifference = difference;
-            }
-        }
-
-        return smallestDifference;
-    }
-
-    private void ResetSegment()
-    {
-        this.aligningOn = false;
-        this.rotatingSegment.Clear();
-        this.currentRotaionAxis = Vector3.zero;
-        this.rotationOfSegment = 0f;
-    }
-
-    #endregion
-
-    public void ResetWallRotation()
-    {
-        this.aligningOn = true;
-        this.numberOfGrasps -= 1;
-    }
 }
-
-
