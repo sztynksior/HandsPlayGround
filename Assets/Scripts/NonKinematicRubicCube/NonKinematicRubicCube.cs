@@ -1,10 +1,5 @@
-using Leap.Unity;
-using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.Net.Sockets;
-using System.Runtime.CompilerServices;
-using Unity.VisualScripting;
+using System.Xml;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -13,14 +8,13 @@ public class NonKinematicRubicCube : MonoBehaviour
     private float minimalProjectionMagnitudeToDetermineRotationAxis = 1.4f;
     private float rotationSpeedMultipler = 2f;
     private float aligningSpeed = 5f;
+    private float shufflingSpeed = 10f;
     private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.001f;
 
-    private int numberOfWalls = 4;
-    private List<float> alignmentAngles = new List<float>();
+    private int numberOfWallsInSegment = 4;
     private List<Vector3> rotationAxes = new List<Vector3>();
 
     private List<NonKinematicPiece> pieces = new List<NonKinematicPiece>();
-    private List<NonKinematicPiece> graspedPieces = new List<NonKinematicPiece>();
     private SegmentRotator segmentRotator;
     private NonKinematicPiece firstGraspedPiece;
     private NonKinematicPiece secondGraspedPiece;
@@ -32,17 +26,21 @@ public class NonKinematicRubicCube : MonoBehaviour
         this.pieces = new List<NonKinematicPiece>(GetComponentsInChildren<NonKinematicPiece>());
         this.DetermineAlignmentAngles();
         this.DetermineRotationAxis();
-        this.segmentRotator = new SegmentRotator(this.alignmentAngles, this.transform, this.rotationSpeedMultipler);
+        List<float> alignmentAngles = this.DetermineAlignmentAngles();
+        this.segmentRotator = new SegmentRotator(alignmentAngles, this.transform, this.rotationSpeedMultipler);
     }
 
-    private void DetermineAlignmentAngles()
+    private List<float> DetermineAlignmentAngles()
     {
-        float aligmentAnglesInterval = 360f / this.numberOfWalls;
+        List<float> alignmentAngles = new List<float>();
+        float aligmentAnglesInterval = 360f / this.numberOfWallsInSegment;
 
-        for (int i = 0; i < numberOfWalls; i++)
+        for (int i = 0; i < numberOfWallsInSegment; i++)
         {
-            this.alignmentAngles.Add(aligmentAnglesInterval * i);
+            alignmentAngles.Add(aligmentAnglesInterval * i);
         }
+
+        return alignmentAngles;
     }
 
     private void DetermineRotationAxis()
@@ -65,6 +63,16 @@ public class NonKinematicRubicCube : MonoBehaviour
 
     private void FixedUpdate()
     {
+        if(this.ShufflingOn)
+        {
+            this.Shuffle();
+
+            if(this.firstGraspedPiece != null || this.secondGraspedPiece != null)
+            {
+                this.RotateCube();
+            }
+        }
+
         if(this.firstGraspedPiece != null)
         {
             if(!this.segmentRotator.SegmentIsRotating()) 
@@ -73,18 +81,18 @@ public class NonKinematicRubicCube : MonoBehaviour
                 {
                     this.RotateCube();
                 }
-                else
+                else if (!this.ShufflingOn)
                 {
                     this.DetermineRotationSegment();
                 }
             }
-            else
+            else if (!this.ShufflingOn)
             {
                 Vector3 pullVector = this.CalculateLocalPullVector();
                 this.segmentRotator.RotateSegmentDependingOnPull(this.firstGraspedPiece.transform.localPosition, pullVector);
             }
         }
-        else if (this.segmentRotator.SegmentIsRotating())
+        else if (this.segmentRotator.SegmentIsRotating() && !this.ShufflingOn)
         {
             this.segmentRotator.AlignRotatedSegment(this.aligningSpeed);
         }
@@ -101,16 +109,13 @@ public class NonKinematicRubicCube : MonoBehaviour
 
     private void DetermineGraspedPiece(NonKinematicPiece piece)
     {
-        if (!this.segmentRotator.SegmentIsRotating())
+        if (this.firstGraspedPiece == null)
         {
-            if (this.firstGraspedPiece == null)
-            {
-                this.firstGraspedPiece = piece;
-            }
-            else if (this.secondGraspedPiece == null)
-            {
-                this.secondGraspedPiece = piece;
-            }
+            this.firstGraspedPiece = piece;
+        }
+        else if (this.secondGraspedPiece == null)
+        {
+            this.secondGraspedPiece = piece;
         }
     }
 
@@ -153,7 +158,7 @@ public class NonKinematicRubicCube : MonoBehaviour
         
         if (rotationAxis != Vector3.zero)
         {
-            List<Transform> piecesToRotate = this.FindPiecesToRotate(rotationAxis);
+            List<Transform> piecesToRotate = this.FindPiecesOnSameAxis(this.firstGraspedPiece.transform.localPosition, rotationAxis);
 
             this.segmentRotator.SetRotatingSegment(piecesToRotate, rotationAxis);
         }
@@ -189,13 +194,32 @@ public class NonKinematicRubicCube : MonoBehaviour
         return rotationAxis;
     }
 
-    private List<Transform> FindPiecesToRotate(Vector3 rotationPlaneNormal)
+    private List<float> shuffleAngles = new List<float>() { -90f, 90f };
+    private int currentAngleIndex = 0;
+
+    private void Shuffle()
+    {
+        if(!this.segmentRotator.SegmentIsRotating())
+        {
+            currentAngleIndex = Random.Range(0, this.shuffleAngles.Count);
+            int randomPieceIndex = Random.Range(0, this.pieces.Count);
+            int randomAxisIndexs = Random.Range(0, this.rotationAxes.Count);
+            List<Transform> piecesToRotate = this.FindPiecesOnSameAxis(this.pieces[randomPieceIndex].transform.localPosition, this.rotationAxes[randomAxisIndexs]);
+            this.segmentRotator.SetRotatingSegment(piecesToRotate, this.rotationAxes[randomAxisIndexs]);
+        }
+        else
+        {
+            this.segmentRotator.RotateSegmetnByAngle(this.shufflingSpeed, shuffleAngles[currentAngleIndex]);
+        }
+    }
+
+    private List<Transform> FindPiecesOnSameAxis(Vector3 piecePoint, Vector3 rotationPlaneNormal)
     {
         List<Transform> piecesToRotate = new List<Transform>();
 
         foreach (NonKinematicPiece piece in this.pieces)
         {
-            if (this.IsPointLyingOnPlane(piece.transform.localPosition, this.firstGraspedPiece.transform.localPosition, rotationPlaneNormal))
+            if (this.IsPointLyingOnPlane(piece.transform.localPosition, piecePoint, rotationPlaneNormal))
             {
                 piecesToRotate.Add(piece.transform);
             }
@@ -215,5 +239,30 @@ public class NonKinematicRubicCube : MonoBehaviour
         }
 
         return isLying;
+    }
+
+    public void ResetCubeState()
+    {
+        foreach(NonKinematicPiece piece in this.pieces)
+        {
+            piece.ResetPiecePositionAndRotation();
+        }
+
+        this.segmentRotator.ResetSegment();
+        this.ShufflingOn = false;
+    }
+
+    private bool ShufflingOn = false;
+
+    public void SwitchShuffling()
+    {
+        if (this.ShufflingOn)
+        {
+            this.ShufflingOn = false;
+        }
+        else if (!this.segmentRotator.SegmentIsRotating())
+        {
+            this.ShufflingOn = true;
+        }
     }
 }
