@@ -1,4 +1,3 @@
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -62,6 +61,26 @@ public class SegmentRotator
         this.RotateSegment(rotationSpeed);
     }
 
+    public void RotateSegmetnByAngle(float rotationSpeed, float angle)
+    {
+        float differenceToAngle = this.CalculateSmalerDifference(angle, this.rotationAngle);
+        if (differenceToAngle != 0)
+        {
+            if (Mathf.Abs(differenceToAngle) > rotationSpeed)
+            {
+                this.RotateSegment(Mathf.Sign(differenceToAngle) * rotationSpeed);
+            }
+            else
+            {
+                this.RotateSegment(differenceToAngle);
+            }
+        }
+        else
+        {
+            this.ResetSegment();
+        }
+    }
+
     public void AlignRotatedSegment(float alignigSpeed)
     {
         float differenceToAlignmentAngle = this.CalculateDifferenceToNearestAlignmentAngle();
@@ -89,16 +108,7 @@ public class SegmentRotator
 
         foreach (float angle in this.alignmentAngles)
         {
-            float difference = angle - this.rotationAngle;
-
-            if (difference < -180f)
-            {
-                difference += 360f;
-            }
-            else if (difference > 180f)
-            {
-                difference -= 360f;
-            }
+            float difference = this.CalculateSmalerDifference(angle, this.rotationAngle);
 
             float distanse = Mathf.Abs(difference);
 
@@ -112,9 +122,26 @@ public class SegmentRotator
         return smallestDifference;
     }
 
-    private void ResetSegment()
+    private float CalculateSmalerDifference(float firstAngle, float secondAngle)
+    {
+        float difference = firstAngle - secondAngle;
+
+        if (difference < -180f)
+        {
+            difference += 360f;
+        }
+        else if (difference > 180f)
+        {
+            difference -= 360f;
+        }
+
+        return difference;
+    }
+
+    public void ResetSegment()
     {
         this.segmentPieces.Clear();
         this.rotationAxis = Vector3.zero;
+        this.rotationAngle = 0f;
     }
 }
