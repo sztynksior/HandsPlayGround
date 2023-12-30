@@ -606,6 +606,58 @@ PrefabInstance:
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: c384323f9685d2649a3ddbba8de372cd, type: 2}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: useHover
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: hoverColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: hoverColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: hoverColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: defaultColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: defaultColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: defaultColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: suspendedColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: suspendedColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: suspendedColor.r
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: primaryHoverColor.b
+      value: 0.509434
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: primaryHoverColor.g
+      value: 0.509434
+      objectReference: {fileID: 0}
+    - target: {fileID: 8945800202272146362, guid: a66ce46ae5557db4f90050447143f7db, type: 3}
+      propertyPath: primaryHoverColor.r
+      value: 0.509434
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects:
