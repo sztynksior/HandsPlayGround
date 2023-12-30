@@ -1,9 +1,6 @@
 using Leap.Unity.Interaction;
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UIElements;
 
 public class NonKinematicPiece : MonoBehaviour
 {
@@ -13,6 +10,8 @@ public class NonKinematicPiece : MonoBehaviour
 
     private InteractionBehaviour interactionBehaviour;
     private Vector3 graspPoint;
+    private Vector3 startingPosition;
+    private Quaternion StartingRotation;
 
     public Vector3 GraspPoint 
     {
@@ -23,6 +22,8 @@ public class NonKinematicPiece : MonoBehaviour
     {
         this.interactionBehaviour = GetComponent<InteractionBehaviour>();
         this.graspPoint = transform.position;
+        this.startingPosition = transform.localPosition;
+        this.StartingRotation = transform.localRotation;
     }
 
     private void Start()
@@ -54,5 +55,10 @@ public class NonKinematicPiece : MonoBehaviour
     {
         this.graspPoint = transform.position;
         this.OnGraspEnd?.Invoke(this);
+    }
+
+    public void ResetPiecePositionAndRotation()
+    {
+        this.transform.SetLocalPositionAndRotation(this.startingPosition, this.StartingRotation);
     }
 }
