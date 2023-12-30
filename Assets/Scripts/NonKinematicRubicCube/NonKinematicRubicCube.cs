@@ -5,11 +5,11 @@ using UnityEngine.UIElements;
 
 public class NonKinematicRubicCube : MonoBehaviour
 {
-    private float minimalProjectionMagnitudeToDetermineRotationAxis = 1.4f;
-    private float rotationSpeedMultipler = 2f;
-    private float aligningSpeed = 5f;
-    private float shufflingSpeed = 10f;
-    private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.001f;
+    [SerializeField] private float minimalProjectionMagnitudeToDetermineRotationAxis = 1.4f;
+    [SerializeField] private float rotationSpeedMultipler = 2f;
+    [SerializeField] private float aligningSpeed = 5f;
+    [SerializeField] private float shufflingSpeed = 10f;
+    [SerializeField] private float epsilonForDeterminingIfPointIsLyingOnPlane = 0.001f;
 
     private int numberOfWallsInSegment = 4;
     private List<Vector3> rotationAxes = new List<Vector3>();
@@ -194,7 +194,7 @@ public class NonKinematicRubicCube : MonoBehaviour
         return rotationAxis;
     }
 
-    private List<float> shuffleAngles = new List<float>() { -90f, 90f };
+    private List<float> shuffleAngles = new List<float>() { -180f, -90f, 90f, 180 };
     private int currentAngleIndex = 0;
 
     private void Shuffle()
@@ -243,13 +243,16 @@ public class NonKinematicRubicCube : MonoBehaviour
 
     public void ResetCubeState()
     {
-        foreach(NonKinematicPiece piece in this.pieces)
+        if(this.firstGraspedPiece == null && this.secondGraspedPiece == null)
         {
-            piece.ResetPiecePositionAndRotation();
-        }
+            foreach (NonKinematicPiece piece in this.pieces)
+            {
+                piece.ResetPiecePositionAndRotation();
+            }
 
-        this.segmentRotator.ResetSegment();
-        this.ShufflingOn = false;
+            this.segmentRotator.ResetSegment();
+            this.ShufflingOn = false;
+        }
     }
 
     private bool ShufflingOn = false;
