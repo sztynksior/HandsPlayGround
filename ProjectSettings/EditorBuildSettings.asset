@@ -6,15 +6,15 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/ChooseLevel.unity
-    guid: c08c5fb3769542946b6df0b3f1aa5ebb
+    path: Assets/Scenes/RubicCubes/ChooseCubeScene.unity
+    guid: cf20dedb88f8c6346bbb562d731983e7
   - enabled: 1
-    path: Assets/Scenes/3DInteractions.unity
-    guid: 0a7788399290fed43a49e04702a447a4
+    path: Assets/Scenes/RubicCubes/2x2.unity
+    guid: df2e1bd6fbf6fab4c96dc606514fc884
   - enabled: 1
-    path: Assets/Scenes/ControlPanel.unity
-    guid: d2b4fc31ddb95d943bd107b85e1561eb
+    path: Assets/Scenes/RubicCubes/3x3.unity
+    guid: ebc8ee79dbacce745bb1ccc50a6ad44d
   - enabled: 1
-    path: Assets/Scenes/RockPaperScisorsGame.unity
-    guid: a75cde8ba734176449c15ba361d29b0f
+    path: Assets/Scenes/RubicCubes/4X4.unity
+    guid: 7f5eeec55a4f45b41803153601bc6ff8
   m_configObjects: {}
