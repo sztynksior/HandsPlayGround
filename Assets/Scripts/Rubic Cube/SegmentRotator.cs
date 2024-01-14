@@ -35,7 +35,7 @@ public class SegmentRotator
 
     public void SetRotatingSegment(List<Transform> pieces, Vector3 rotationAxis)
     {
-        this.segmentPieces = pieces;
+        this.segmentPieces = new List<Transform>(pieces);
         this.rotationAxis = rotationAxis;
     }
 
@@ -66,7 +66,7 @@ public class SegmentRotator
         float differenceToAngle = this.CalculateSmalerDifference(angle, this.rotationAngle);
         if (differenceToAngle != 0)
         {
-            if (Mathf.Abs(differenceToAngle) > rotationSpeed)
+            if (Mathf.Abs(differenceToAngle) > Mathf.Abs(rotationSpeed))
             {
                 this.RotateSegment(Mathf.Sign(differenceToAngle) * rotationSpeed);
             }
@@ -86,7 +86,7 @@ public class SegmentRotator
         float differenceToAlignmentAngle = this.CalculateDifferenceToNearestAlignmentAngle();
         if (differenceToAlignmentAngle != 0)
         {
-            if (Mathf.Abs(differenceToAlignmentAngle) > alignigSpeed)
+            if (Mathf.Abs(differenceToAlignmentAngle) > Mathf.Abs(alignigSpeed))
             {
                 this.RotateSegment(Mathf.Sign(differenceToAlignmentAngle) * alignigSpeed);
             }

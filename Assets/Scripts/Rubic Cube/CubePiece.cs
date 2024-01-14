@@ -5,7 +5,6 @@ using UnityEngine;
 public class CubePiece : MonoBehaviour
 {
     public event Action<CubePiece> OnGraspBegin;
-    public event Action<Vector3, Vector3> OnGraspStay;
     public event Action<CubePiece> OnGraspEnd;
 
     private InteractionBehaviour interactionBehaviour;

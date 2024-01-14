@@ -603,6 +603,14 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4941878005687738419, guid: 4e3928d2d5196b44087c757cd999bd06, type: 3}
+      propertyPath: _leapProvider
+      value: 
+      objectReference: {fileID: 467422005}
+    - target: {fileID: 4943275577428000115, guid: 4e3928d2d5196b44087c757cd999bd06, type: 3}
+      propertyPath: _leapProvider
+      value: 
+      objectReference: {fileID: 467422005}
     - target: {fileID: 7640663777752848296, guid: 4e3928d2d5196b44087c757cd999bd06, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
@@ -1893,7 +1901,7 @@ PrefabInstance:
     - target: {fileID: 1095476125, guid: b6faa7a3c34399644b2a8a54d273f5c0, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
-      objectReference: {fileID: 2100000, guid: 752def9bb62a9ea4b95ff2a8a651fa1e, type: 2}
+      objectReference: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
     - target: {fileID: 1199596622262413205, guid: b6faa7a3c34399644b2a8a54d273f5c0, type: 3}
       propertyPath: hoverColor.g
       value: 1
@@ -2469,7 +2477,7 @@ PrefabInstance:
       objectReference: {fileID: 467422005}
     - target: {fileID: 6091436777440832123, guid: 8e0fbeda1179e774da6992760eebb4f1, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.9833074
+      value: 0.98330736
       objectReference: {fileID: 0}
     - target: {fileID: 6091436777440832123, guid: 8e0fbeda1179e774da6992760eebb4f1, type: 3}
       propertyPath: m_LocalScale.z
@@ -2561,7 +2569,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8142502994988969365, guid: 8e0fbeda1179e774da6992760eebb4f1, type: 3}
       propertyPath: m_LocalScale.x
-      value: 0.9833074
+      value: 0.98330736
       objectReference: {fileID: 0}
     - target: {fileID: 8142502994988969365, guid: 8e0fbeda1179e774da6992760eebb4f1, type: 3}
       propertyPath: m_LocalScale.z

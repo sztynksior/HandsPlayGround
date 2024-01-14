@@ -67,7 +67,7 @@ public class RubicCube : MonoBehaviour
         {
             this.Shuffle();
 
-            if(this.firstGraspedPiece != null || this.secondGraspedPiece != null)
+            if(this.firstGraspedPiece != null && this.secondGraspedPiece != null)
             {
                 this.RotateCube();
             }
