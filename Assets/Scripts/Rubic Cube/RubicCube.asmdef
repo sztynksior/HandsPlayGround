@@ -1,0 +1,16 @@
+{
+    "name": "RubicCube",
+    "rootNamespace": "",
+    "references": [
+        "GUID:3a12b97a7afaf6b47bfe53cf1f942886"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
